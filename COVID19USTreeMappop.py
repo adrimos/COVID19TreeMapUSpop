@@ -10,7 +10,7 @@ import plotly as pl
 
 # %%
 # Load the data from the John Hopkins github repo
-df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/04-26-2020.csv')
+df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/07-10-2020.csv')
 dfpop = pd.read_csv('USpopCounties.csv')
 
 # %%
@@ -24,7 +24,7 @@ df1 = df1.rename(columns={'Country_Region': 'Country'})
 df1 = df1.rename(columns={'Combined_Key': 'County/State'})
 
 # %%
-# checking a match in column banes to merge by County/State
+# checking a match in column names to merge by County/State
 set(df1.columns).intersection(set(dfpop.columns))
 
 # %%
@@ -41,8 +41,42 @@ dfpop['County/State'] = dfpop['County/State'] + ', US'
 df1['County/State'].isin(dfpop['County/State']).value_counts()
 
 # %%
+# Replacing names of counties that are different
+dfpop['County/State'] = dfpop['County/State'].str.replace(r' Parish', '')
+dfpop['County/State'] = dfpop['County/State'].str.replace(r' Census Area', '')
+dfpop['County/State'] = dfpop['County/State'].str.replace(r'Baltimore city', 'Baltimore City')
+dfpop['County/State'] = dfpop['County/State'].str.replace(r' City and Borough', '')
+dfpop['County/State'] = dfpop['County/State'].str.replace(r' city', '')
+dfpop['County/State'] = dfpop['County/State'].str.replace(r' Municipality', '')
+dfpop['County/State'] = dfpop['County/State'].str.replace(r' Borough', '')
+dfpop.at[2924,'County/State']='Fairfax City, Virginia, US'
+dfpop.at[2926,'County/State']='Franklin City, Virginia, US'
+dfpop.at[2895,'County/State']='Richmond City, Virginia, US'
+dfpop.at[2896,'County/State']='Roanoke City, Virginia, US'
+dfpop.at[1597,'County/State']='St. Louis City, Missouri, US'
+dfpop['County/State'] = dfpop['County/State'].str.replace(r'New York, New York, US', 'New York City, New York, US')
+
+
+
+# %%
 # Merging dfpop into df1 to get the population count
 dfpopmerged = pd.merge(left=df1, right=dfpop, how='left', left_on='County/State', right_on='County/State')
+
+# %%
+dfpopmerged.at[901,'Population']= 42628 #michigan department of corrections
+
+Weber = dfpop.loc[dfpop['County/State']=='Weber, Utah, US', 'Population'].item()
+Morgan = dfpop.loc[dfpop['County/State']=='Morgan, Utah, US', 'Population'].item()
+dfpopmerged.at[2999, 'Population'] = Weber + Morgan
+
+dfpopmerged.at[1438,'Population']= 491918 #kansas city
+dfpopmerged.at[154,'Population']= 877 #bear river utah
+dfpopmerged.at[780,'Population']= 1211 #dona ana new mexico
+
+Dukes = dfpop.loc[dfpop['County/State']=='Dukes, Massachusetts, US', 'Population'].item()
+Nantucket = dfpop.loc[dfpop['County/State']=='Nantucket, Massachusetts, US', 'Population'].item()
+dfpopmerged.at[804, 'Population'] = Dukes + Nantucket
+
 
 # %%
 # there are some issues with the merge. Names of counties are different
@@ -52,8 +86,9 @@ dfpopmerged.isnull().sum()
 # %%
 #dfpopmerged = dfpopmerged.replace({'Population': {1: 62568}})
 dfpopmerged.at[1,'Population']= 62568
-dfpopmerged.at[32,'Population']= 156505
-dfpopmerged.at[43,'Population']= 25661
+dfpopmerged.at[31,'Population']= 5750
+dfpopmerged.at[34,'Population']= 156505
+dfpopmerged.at[47,'Population']= 25661
 dfpopmerged.at[52,'Population']= 296112
 dfpopmerged.at[81,'Population']= 121176
 dfpopmerged.at[88,'Population']= 22714
